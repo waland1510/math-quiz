@@ -102,12 +102,24 @@
 			timeTaken = Math.floor((Date.now() - startTime) / 1000);
 			encouragementMessage = getEncouragement();
 			saveRecord();
-			fireworkSound.play();
+			playSound(tadaaSound);
+		}
+	};
+
+	let muted = false;
+
+	const toggleMute = () => {
+		muted = !muted;
+	};
+
+	const playSound = (sound: HTMLAudioElement) => {
+		if (!muted) {
+			sound.play();
 		}
 	};
 	const correctSound = new Audio('/audio/correct.mp3');
 	const wrongSound = new Audio('/audio/wrong.mp3');
-	const fireworkSound = new Audio('/audio/tadaa.mp3');
+	const tadaaSound = new Audio('/audio/tadaa.mp3');
 
 	const checkAnswer = () => {
 		const correctAnswer = questions[currentQuestion - 1]?.answer;
@@ -117,11 +129,11 @@
 		if (isCorrect) {
 			if (!quizCompleted) {
 				setTimeout(nextQuestion, 500);
-				correctSound.play();
+				playSound(correctSound);
 			}
 		} else {
 			incorrectAnswers++;
-			wrongSound.play();
+			playSound(wrongSound);
 		}
 		answer = null;
 	};
@@ -135,6 +147,7 @@
 	};
 
 	const speakQuestion = (text: string) => {
+		if (muted) return;
 		const utterance = new SpeechSynthesisUtterance(convertToSpokenFormat(text));
 		if (selectedVoice) utterance.voice = selectedVoice;
 		speechSynthesis.speak(utterance);
@@ -148,6 +161,18 @@
 
 	$: setVoiceForLanguage();
 
+	const playAgain = () => {
+		currentQuestion = 0;
+		questions = [];
+		feedback = '';
+		answer = null;
+		incorrectAnswers = 0;
+		quizCompleted = false;
+		encouragementMessage = '';
+		startTime = Date.now();
+		nextQuestion();
+	};
+
 	onMount(() => {
 		speechSynthesis.onvoiceschanged = setVoiceForLanguage;
 		startTime = Date.now();
@@ -157,9 +182,15 @@
 
 <!-- Quiz UI -->
 <div id="quiz">
-	<button id="backButton" on:click={goBackToSelector} aria-label="Go Back">
-		{translations[language].backButton}
-	</button>
+	<div class="button-container">
+		<button id="backButton" on:click={goBackToSelector} aria-label="Go Back">
+			{translations[language].backButton}
+		</button>
+
+		<button id="muteButton" on:click={toggleMute} aria-label="Toggle Mute">
+			{muted ? translations[language].unmute : translations[language].mute}
+		</button>
+	</div>
 
 	{#if !quizCompleted}
 		<div id="progress">
@@ -187,6 +218,9 @@
 		<p>{translations[language].incorrectAttempts}: {incorrectAnswers}</p>
 		<p class="encouragement">{encouragementMessage}</p>
 		<Chest isQuizCompleted={quizCompleted} />
+		<button class="play-again-button" on:click={playAgain} aria-label="Play Again">
+			{translations[language].playAgain}
+		</button>
 	{/if}
 </div>
 
@@ -198,6 +232,12 @@
 		padding: 1rem;
 		max-width: 600px;
 		margin: 0 auto;
+	}
+
+	.button-container {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
 	}
 
 	#backButton {
@@ -217,6 +257,36 @@
 	#backButton:focus {
 		background-color: #ddd;
 		outline: none;
+	}
+
+	#muteButton {
+		align-self: flex-end;
+		padding: 0.5rem 1rem;
+		background-color: #f5f5f5;
+		border: none;
+		color: #333;
+		margin-bottom: 1rem;
+		font-size: 1rem;
+		cursor: pointer;
+		border-radius: 5px;
+		transition: background-color 0.3s ease;
+	}
+
+	#muteButton:hover,
+	#muteButton:focus {
+		background-color: #ddd;
+		outline: none;
+	}
+
+	.play-again-button {
+		position: absolute;
+		top: 90px;
+		left: 50%;
+		transform: translateX(-50%);
+		padding: 1rem 2rem;
+		font-size: 1.2rem;
+		color: white;
+		background-color: #4caf50;
 	}
 
 	#progress {
