@@ -90,6 +90,7 @@
   @media (max-width: 600px) {
     h1 {
       font-size: 1.8em;
+      margin-top: 40px;
     }
 
     .start-buttons button {

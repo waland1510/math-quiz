@@ -27,7 +27,7 @@
       case 3:
         return '🥉';
       default:
-        return rank.toString();
+        return '🏅';
     }
   };
 </script>
@@ -36,10 +36,10 @@
   <section id="records">
     <h2 class="records-title">{translations[language].recordsTitle}</h2>
     {#if records.length === 0}
-      <p>{translations[language].noRecords}</p>
+      <p class="no-records">{translations[language].noRecords}</p>
     {:else if window.innerWidth <= 600}
       <div class="records-list">
-        {#each records as record, index}
+        {#each records.slice(0, 5) as record, index}
           <div class="record-item">
             <p>
               <strong>{translations[language].rank}:</strong>
@@ -94,6 +94,12 @@
     color: #4a4a4a;
     margin-bottom: 20px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .no-records {
+    font-size: 1.2em;
+    text-align: center;
+    color: #888;
   }
 
   .records-list {

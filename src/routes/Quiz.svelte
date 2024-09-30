@@ -1,348 +1,300 @@
 <script lang="ts">
-  import { translations, type Translation } from './translations';
-  import { onMount, createEventDispatcher } from 'svelte';
-  import { addRecord, type Record } from '../store';
+	import { translations, type Translation } from './translations';
+	import { onMount, createEventDispatcher } from 'svelte';
+	import { addRecord, type Record } from '../store';
+	import Chest from './Chest.svelte';
 
-  const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 
-  export let quizType: 'multiplication' | 'division';
-  export let language: 'en' | 'fr' | 'es' | 'uk';
+	export let quizType: 'multiplication' | 'division';
+	export let language: 'en' | 'fr' | 'es' | 'uk';
 
-  let currentQuestion = 0;
-  let questions: { question: string; answer: number }[] = [];
-  let feedback = '';
-  let answer: number | null = null;
-  let incorrectAnswers = 0;
-  let quizCompleted = false;
-  let selectedVoice: SpeechSynthesisVoice | null = null;
-  let encouragementMessage = ''; // For displaying encouragement messages
+	let currentQuestion = 0;
+	let questions: { question: string; answer: number }[] = [];
+	let feedback = '';
+	let answer: number | null = null;
+	let incorrectAnswers = 0;
+	let quizCompleted = false;
+	let selectedVoice: SpeechSynthesisVoice | null = null;
+	let encouragementMessage = '';
+	let startTime: number;
+	let timeTaken: number = 0;
 
-  const totalQuestions = 10;
-  let startTime: number;
-  let timeTaken: number = 0;
+	const totalQuestions = 10;
 
-  const getRandomNumber = () => Math.floor(Math.random() * 7) + 3;
+	const getRandomNumber = () => Math.floor(Math.random() * 7) + 3;
 
-  const generateQuestion = () => {
-    const num1 = getRandomNumber();
-    const num2 = getRandomNumber();
+	const generateQuestion = () => {
+		const num1 = getRandomNumber();
+		const num2 = getRandomNumber();
 
-    if (quizType === 'multiplication') {
-      return { question: `${num1} × ${num2}`, answer: num1 * num2 };
-    } else {
-      const dividend = num1 * num2;
-      return { question: `${dividend} ÷ ${num1}`, answer: num2 };
-    }
-  };
+		return quizType === 'multiplication'
+			? { question: `${num1} × ${num2}`, answer: num1 * num2 }
+			: { question: `${num1 * num2} ÷ ${num1}`, answer: num2 };
+	};
 
-  const convertToSpokenFormat = (questionText: string): string => {
-    const mathTranslations = {
-      en: { times: 'times', dividedBy: 'divided by' },
-      fr: { times: 'fois', dividedBy: 'divisé par' },
-      es: { times: 'por', dividedBy: 'dividido por' },
-      uk: { times: 'помножити на', dividedBy: 'поділено на' }
-    };
+	const mathTranslations = {
+		en: { times: 'times', dividedBy: 'divided by' },
+		fr: { times: 'fois', dividedBy: 'divisé par' },
+		es: { times: 'por', dividedBy: 'dividido por' },
+		uk: { times: 'помножити на', dividedBy: 'поділено на' }
+	};
 
-    const currentLangMath = mathTranslations[language as keyof typeof mathTranslations];
-    return questionText.replace('×', currentLangMath.times).replace('÷', currentLangMath.dividedBy);
-  };
+	const convertToSpokenFormat = (questionText: string): string =>
+		questionText
+			.replace('×', mathTranslations[language]?.times)
+			.replace('÷', mathTranslations[language]?.dividedBy);
 
-  const getEncouragement = (incorrectAttempts: number): string => {
-    const encouragements = {
-      en: [
-        "🌟 Perfect score! You're a math genius!",
-        '🚀 Great job! Almost perfect!',
-        '👍 Good effort! Keep practicing!',
-        "💪 Don't give up! You'll improve with more practice!"
-      ],
-      fr: [
-        '🌟 Score parfait ! Tu es un génie des maths !',
-        '🚀 Super travail ! Presque parfait !',
-        '👍 Bon effort ! Continue à pratiquer !',
-        "💪 N'abandonne pas ! Tu t'amélioreras avec plus de pratique !"
-      ],
-      es: [
-        '🌟 ¡Puntuación perfecta! ¡Eres un genio de las matemáticas!',
-        '🚀 ¡Gran trabajo! ¡Casi perfecto!',
-        '👍 ¡Buen esfuerzo! ¡Sigue practicando!',
-        '💪 ¡No te rindas! ¡Mejorarás con más práctica!'
-      ],
-      uk: [
-        '🌟 Ідеальний результат! Ти математичний геній!',
-        '🚀 Чудова робота! Майже ідеально!',
-        '👍 Гарне зусилля! Продовжуй практикуватися!',
-        '💪 Не здавайся! Ти покращишся з більшою практикою!'
-      ]
-    };
+	const encouragements = {
+		en: [
+			"🌟 Perfect score! You're a math genius!",
+			'🚀 Great job! Almost perfect!',
+			'👍 Good effort! Keep practicing!',
+			"💪 Don't give up! You'll improve with more practice!"
+		],
+		fr: [
+			'🌟 Score parfait ! Tu es un génie des maths !',
+			'🚀 Super travail ! Presque parfait !',
+			'👍 Bon effort ! Continue à pratiquer !',
+			"💪 N'abandonne pas ! Tu t'amélioreras avec plus de pratique !"
+		],
+		es: [
+			'🌟 ¡Puntuación perfecta! ¡Eres un genio de las matemáticas!',
+			'🚀 ¡Gran trabajo! ¡Casi perfecto!',
+			'👍 ¡Buen esfuerzo! ¡Sigue practicando!',
+			'💪 ¡No te rindas! ¡Mejorarás con más práctica!'
+		],
+		uk: [
+			'🌟 Ідеальний результат! Ти математичний геній!',
+			'🚀 Чудова робота! Майже ідеально!',
+			'👍 Гарне зусилля! Продовжуй практикуватися!',
+			'💪 Не здавайся! Ти покращишся з більшою практикою!'
+		]
+	};
 
-    let index;
-    if (incorrectAttempts === 0) {
-      index = 0;
-    } else if (incorrectAttempts <= 2) {
-      index = 1;
-    } else if (incorrectAttempts <= 5) {
-      index = 2;
-    } else {
-      index = 3;
-    }
+	const getEncouragement = () => {
+		const levels = [0, 2, 5, Infinity];
+		const index = levels.findIndex((level) => incorrectAnswers <= level);
+		return encouragements[language]?.[incorrectAnswers === 0 ? 0 : index];
+	};
 
-    return encouragements[language as keyof typeof encouragements][index];
-  };
+	const saveRecord = () => {
+		const record: Record = {
+			type: quizType,
+			time: timeTaken,
+			incorrectAttempts: incorrectAnswers,
+			date: new Date().toLocaleString()
+		};
+		addRecord(record);
+	};
 
-  const saveRecord = () => {
-  const record: Record = {
-    type: quizType,
-    time: timeTaken,
-    incorrectAttempts: incorrectAnswers,
-    date: new Date().toLocaleDateString()
-  };
+	const nextQuestion = () => {
+		if (currentQuestion < totalQuestions) {
+			const newQuestion = generateQuestion();
+			questions.push(newQuestion);
+			feedback = '';
+			answer = null;
+			currentQuestion++;
+			document.querySelector('input')?.focus();
+			speakQuestion(newQuestion.question);
+		} else {
+			quizCompleted = true;
+			timeTaken = Math.floor((Date.now() - startTime) / 1000);
+			encouragementMessage = getEncouragement();
+			saveRecord();
+			fireworkSound.play();
+		}
+	};
+	const correctSound = new Audio('/audio/correct.mp3');
+	const wrongSound = new Audio('/audio/wrong.mp3');
+	const fireworkSound = new Audio('/audio/tadaa.mp3');
 
-  // Define keys for both record types
-  const multiplicationKey = 'multiplicationQuizRecords';
-  const divisionKey = 'divisionQuizRecords';
+	const checkAnswer = () => {
+		const correctAnswer = questions[currentQuestion - 1]?.answer;
+		const isCorrect = answer === correctAnswer;
+		feedback = isCorrect ? translations[language].correct : translations[language].incorrect;
 
-  // Load existing records from local storage
-  const multiplicationRecords: Record[] = JSON.parse(localStorage.getItem(multiplicationKey) || '[]');
-  const divisionRecords: Record[] = JSON.parse(localStorage.getItem(divisionKey) || '[]');
+		if (isCorrect) {
+			if (!quizCompleted) {
+				setTimeout(nextQuestion, 500);
+				correctSound.play();
+			}
+		} else {
+			incorrectAnswers++;
+			wrongSound.play();
+		}
+		answer = null;
+	};
 
-  // Add the new record to the appropriate list
-  if (quizType === 'multiplication') {
-    multiplicationRecords.push(record);
-  } else {
-    divisionRecords.push(record);
-  }
+	const handleKeyDown = (event: KeyboardEvent) => {
+		if (event.key === 'Enter' && answer !== null) checkAnswer();
+	};
 
-  // Combine both records and sort by time taken (ascending)
-  const combinedRecords = [...multiplicationRecords, ...divisionRecords];
-  combinedRecords.sort((a, b) => a.time - b.time);
+	const goBackToSelector = () => {
+		dispatch('backToSelector');
+	};
 
-  // Keep only the top 5 records
-  const bestRecords = combinedRecords.slice(0, 5);
+	const speakQuestion = (text: string) => {
+		const utterance = new SpeechSynthesisUtterance(convertToSpokenFormat(text));
+		if (selectedVoice) utterance.voice = selectedVoice;
+		speechSynthesis.speak(utterance);
+	};
 
-  // Save the best records back to local storage
-  const bestMultiplicationRecords = bestRecords.filter(r => r.type === 'multiplication');
-  const bestDivisionRecords = bestRecords.filter(r => r.type === 'division');
+	const setVoiceForLanguage = () => {
+		const voices = speechSynthesis.getVoices();
+		const langMap = { en: 'en-CA', fr: 'fr-CA', es: 'es-MX', uk: 'uk-UA' };
+		selectedVoice = voices.find((voice) => voice.lang.startsWith(langMap[language])) || null;
+	};
 
-  localStorage.setItem(multiplicationKey, JSON.stringify(bestMultiplicationRecords));
-  localStorage.setItem(divisionKey, JSON.stringify(bestDivisionRecords));
+	$: setVoiceForLanguage();
 
-  // Update the state or store (if applicable)
-  addRecord(record);
-};
-
-  const nextQuestion = () => {
-    if (currentQuestion < totalQuestions) {
-      const newQuestion = generateQuestion();
-      questions.push(newQuestion);
-      feedback = '';
-      answer = null;
-      currentQuestion++;
-      document.querySelector('input')?.focus();
-      speakQuestion(newQuestion.question);
-    } else {
-      quizCompleted = true;
-      timeTaken = Math.floor((Date.now() - startTime) / 1000);
-      encouragementMessage = getEncouragement(incorrectAnswers); // Get encouragement
-      saveRecord();
-      speakFeedback(encouragementMessage); // Speak out the encouragement
-    }
-  };
-
-  const checkAnswer = () => {
-    const correctAnswer = questions[currentQuestion - 1]?.answer;
-
-    if (answer === correctAnswer) {
-      feedback = translations[language].correct;
-      speakFeedback(translations[language].correct);
-      setTimeout(() => {
-        if (!quizCompleted) nextQuestion();
-      }, 500);
-    } else {
-      feedback = translations[language].incorrect;
-      incorrectAnswers++;
-      speakFeedback(translations[language].incorrect);
-    }
-    answer = null;
-  };
-
-  const speakFeedback = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    speechSynthesis.speak(utterance);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' && answer !== null) {
-      checkAnswer();
-    }
-  };
-
-  const goBackToSelector = () => {
-    dispatch('backToSelector');
-  };
-
-  const speakQuestion = (text: string) => {
-    const spokenText = convertToSpokenFormat(text);
-    const utterance = new SpeechSynthesisUtterance(spokenText);
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    speechSynthesis.speak(utterance);
-  };
-
-  const setVoiceForLanguage = () => {
-    const voices = speechSynthesis.getVoices();
-    const langMap = {
-      en: 'en-CA',
-      fr: 'fr-CA',
-      es: 'es-MX',
-      uk: 'uk-UA'
-    } as const;
-    selectedVoice =
-      voices.find((voice) => voice.lang.startsWith(langMap[language as keyof typeof langMap])) ||
-      null;
-  };
-
-  $: setVoiceForLanguage();
-
-  onMount(() => {
-    speechSynthesis.onvoiceschanged = setVoiceForLanguage;
-    startTime = Date.now();
-    nextQuestion();
-  });
+	onMount(() => {
+		speechSynthesis.onvoiceschanged = setVoiceForLanguage;
+		startTime = Date.now();
+		nextQuestion();
+	});
 </script>
 
 <!-- Quiz UI -->
 <div id="quiz">
-  <button id="backButton" on:click={goBackToSelector} aria-label="Go Back">
-    {translations[language].backButton}
-  </button>
+	<button id="backButton" on:click={goBackToSelector} aria-label="Go Back">
+		{translations[language].backButton}
+	</button>
 
-  {#if !quizCompleted}
-    <div id="progress">
-      <div id="progress-bar" style="width: {(currentQuestion / totalQuestions) * 100}%"></div>
-    </div>
-    <p>
-      {translations[language].question}
-      {currentQuestion}
-      {translations[language].of}
-      {totalQuestions}
-    </p>
-    <p style="font-size: 1.4em; font-weight: bold; margin-top: 20px; margin-bottom: 20px;">
-      {questions[currentQuestion - 1]?.question} = ?
-    </p>
-    <input type="number" bind:value={answer} on:keydown={handleKeyDown} aria-label="Answer Input" />
-    <button on:click={checkAnswer} disabled={answer === null}
-      >{translations[language].submit}</button
-    >
-    <p
-      class="feedback {feedback.includes(translations[language].correct) ? 'correct' : 'incorrect'}"
-    >
-      {feedback}
-    </p>
-  {:else}
-    <p>{translations[language].quizCompleted}</p>
-    <p>{translations[language].timeTaken}: {timeTaken} {translations[language].seconds}</p>
-    <p>{translations[language].incorrectAttempts}: {incorrectAnswers}</p>
-    <p class="encouragement">{encouragementMessage}</p>
-  {/if}
+	{#if !quizCompleted}
+		<div id="progress">
+			<div id="progress-bar" style="width: {(currentQuestion / totalQuestions) * 100}%"></div>
+		</div>
+		<p>
+			{translations[language].question}
+			{currentQuestion}
+			{translations[language].of}
+			{totalQuestions}
+		</p>
+		<p class="question">{questions[currentQuestion - 1]?.question} = ?</p>
+		<input type="number" bind:value={answer} on:keydown={handleKeyDown} aria-label="Answer Input" />
+		<button on:click={checkAnswer} disabled={answer === null}
+			>{translations[language].submit}</button
+		>
+		<p
+			class="feedback {feedback.includes(translations[language].correct) ? 'correct' : 'incorrect'}"
+		>
+			{feedback}
+		</p>
+	{:else}
+		<p>{translations[language].quizCompleted}</p>
+		<p>{translations[language].timeTaken}: {timeTaken} {translations[language].seconds}</p>
+		<p>{translations[language].incorrectAttempts}: {incorrectAnswers}</p>
+		<p class="encouragement">{encouragementMessage}</p>
+		<Chest isQuizCompleted={quizCompleted} />
+	{/if}
 </div>
 
 <style>
-  /* Your existing styles */
+	#quiz {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 1rem;
+		max-width: 600px;
+		margin: 0 auto;
+	}
 
-  .encouragement {
-    font-size: 1.2em;
-    color: #333;
-    margin-top: 20px;
-  }
-  #quiz {
-    background-color: #f9f9f9;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    margin: 20px auto;
-    max-width: 500px;
-    text-align: center;
-    transition: all 0.3s ease-in-out;
-  }
+	#backButton {
+		align-self: flex-start;
+		background-color: #f5f5f5;
+		border: none;
+		color: #333;
+		padding: 0.5rem 1rem;
+		margin-bottom: 1rem;
+		font-size: 1rem;
+		cursor: pointer;
+		border-radius: 5px;
+		transition: background-color 0.3s ease;
+	}
 
-  button {
-    padding: 12px 25px;
-    font-size: 1.2em;
-    color: white;
-    background-color: #4caf50;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: background-color 0.2s ease-in;
-  }
+	#backButton:hover,
+	#backButton:focus {
+		background-color: #ddd;
+		outline: none;
+	}
 
-  button:disabled {
-    background-color: #9e9e9e;
-    cursor: not-allowed;
-  }
+	#progress {
+		width: 100%;
+		height: 10px;
+		background-color: #e0e0e0;
+		border-radius: 5px;
+		margin-bottom: 1rem;
+	}
 
-  button:hover:not(:disabled) {
-    background-color: #45a049;
-  }
+	#progress-bar {
+		height: 100%;
+		background-color: #4caf50;
+		border-radius: 5px;
+		transition: width 0.4s ease;
+	}
 
-  #backButton {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    padding: 8px 15px;
-    font-size: 1em;
-    background-color: #008cba;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
+	.question {
+		font-size: 1.5rem;
+		margin: 1rem 0;
+		font-weight: bold;
+		text-align: center;
+	}
 
-  #backButton:hover {
-    background-color: #007b9a;
-  }
+	input[type='number'] {
+		width: 100%;
+		padding: 0.5rem;
+		font-size: 1.2rem;
+		border: 2px solid #ccc;
+		border-radius: 5px;
+		margin-bottom: 1rem;
+		box-sizing: border-box;
+	}
 
-  input[type='number'] {
-    padding: 10px;
-    font-size: 1.2em;
-    margin: 10px 0;
-    width: 120px;
-    text-align: center;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
+	input[type='number']:focus {
+		border-color: #4caf50;
+		outline: none;
+	}
 
-  #progress {
-    width: 100%;
-    background-color: #f1f1f1;
-    border-radius: 10px;
-    margin-bottom: 20px;
-  }
+	button {
+		padding: 0.75rem 1.5rem;
+		font-size: 1.2rem;
+		color: white;
+		background-color: #4caf50;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
 
-  #progress-bar {
-    height: 10px;
-    background-color: #4caf50;
-    border-radius: 10px;
-    transition: width 0.3s ease-in-out;
-  }
+	button[disabled] {
+		background-color: #ccc;
+		cursor: not-allowed;
+	}
 
-  #quiz p.feedback {
-    font-size: 1.2em;
-    margin-top: 15px;
-    color: #333;
-    transition: all 0.3s ease-in;
-  }
+	button:hover:not([disabled]),
+	button:focus:not([disabled]) {
+		background-color: #45a049;
+		outline: none;
+	}
 
-  .correct {
-    color: green;
-  }
+	.feedback {
+		font-size: 1.2rem;
+		font-weight: bold;
+		margin: 1rem 0;
+	}
 
-  .incorrect {
-    color: red;
-  }
+	.correct {
+		color: #4caf50;
+	}
+
+	.incorrect {
+		color: #f44336;
+	}
+
+	.encouragement {
+		font-size: 1.5rem;
+		margin-top: 1.5rem;
+		color: #ff9800;
+	}
 </style>

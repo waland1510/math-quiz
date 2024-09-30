@@ -18,7 +18,6 @@ import type { Language } from './+page.svelte';
 </script>
 
 <div class="language-selector">
-  <label for="language-select">Select Language:</label>
   <select id="language-select" bind:value={currentLanguage} on:change={handleChange}>
     {#each languages as { code, label }}
       <option value={code} selected={currentLanguage === code}>{label}</option>
@@ -30,8 +29,7 @@ import type { Language } from './+page.svelte';
   .language-selector {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 20px;
+  
   }
 
   .language-selector select {
@@ -46,10 +44,5 @@ import type { Language } from './+page.svelte';
 
   .language-selector select:hover {
     border-color: #4caf50;
-  }
-
-  .language-selector label {
-    font-size: 1.2em;
-    color: #4a4a4a;
   }
 </style>
