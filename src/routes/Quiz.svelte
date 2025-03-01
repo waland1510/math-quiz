@@ -122,21 +122,26 @@
 	const tadaaSound = new Audio('/audio/tadaa.mp3');
 
 	const checkAnswer = () => {
-		const correctAnswer = questions[currentQuestion - 1]?.answer;
-		const isCorrect = answer === correctAnswer;
-		feedback = isCorrect ? translations[language].correct : translations[language].incorrect;
+    const correctAnswer = questions[currentQuestion - 1]?.answer;
+    const utterance = new SpeechSynthesisUtterance(answer?.toString() || '');
+    utterance.voice = selectedVoice;
+    utterance.onend = () => {
+        const isCorrect = answer === correctAnswer;
+        feedback = isCorrect ? translations[language].correct : translations[language].incorrect;
 
-		if (isCorrect) {
-			if (!quizCompleted) {
-				setTimeout(nextQuestion, 500);
-				playSound(correctSound);
-			}
-		} else {
-			incorrectAnswers++;
-			playSound(wrongSound);
-		}
-		answer = null;
-	};
+        if (isCorrect) {
+            if (!quizCompleted) {
+                setTimeout(nextQuestion, 500);
+                playSound(correctSound);
+            }
+        } else {
+            incorrectAnswers++;
+            playSound(wrongSound);
+        }
+        answer = null;
+    };
+    speechSynthesis.speak(utterance);
+};
 
 	const handleKeyDown = (event: KeyboardEvent) => {
 		if (event.key === 'Enter' && answer !== null) checkAnswer();
