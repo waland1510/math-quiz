@@ -7,12 +7,18 @@
   import LanguageSelect from './LanguageSelect.svelte';
   import Quiz from './Quiz.svelte';
   import Records from './Records.svelte';
+	import Verbs from './Verbs.svelte';
 
   let currentLanguage: Language = 'en';
   let quizType: 'multiplication' | 'division' | null = null;
+  let verbsType: 'firstGroup' | 'secondGroup' | 'thirdGroup' | null = null;
 
-  const startQuiz = (type: 'multiplication' | 'division') => {
+  const startQuiz = (type: 'multiplication' | 'division' ) => {
     quizType = type;
+  };
+  const startVerbs = (type: 'firstGroup' | 'secondGroup' | 'thirdGroup') => {
+    verbsType = type;
+    changeLanguage('fr');
   };
 
   const changeLanguage = (lang: Language) => {
@@ -21,11 +27,12 @@
 
   const showQuizSelector = () => {
     quizType = null;
+    verbsType = null;
   };
 </script>
 
 <main>
-  {#if !quizType}
+  {#if !quizType && !verbsType}
     <div class="language-toggle">
       <LanguageSelect
         {currentLanguage}
@@ -41,10 +48,26 @@
         {translations[currentLanguage].startDivision}
       </button>
     </div>
+    <h1>{translations[currentLanguage].verbs}</h1>
+    <div class="start-buttons">
+      <button on:click={() => startVerbs('firstGroup')}>
+        {translations[currentLanguage].firstGroup}
+      </button>
+      <button on:click={() => startVerbs('secondGroup')}>
+        {translations[currentLanguage].secondGroup}
+      </button>
+      <button on:click={() => startVerbs('thirdGroup')}>
+        {translations[currentLanguage].thirdGroup}
+      </button>
+    </div>
   {/if}
 
   {#if quizType}
     <Quiz {quizType} language={currentLanguage} on:backToSelector={showQuizSelector} />
+  {/if}
+  
+  {#if verbsType}
+    <Verbs {verbsType} language='fr' on:backToSelector={showQuizSelector} />
   {/if}
   <Records language={currentLanguage} />
 </main>

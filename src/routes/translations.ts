@@ -24,6 +24,10 @@ export type Translation = {
 	mute: string;
 	unmute: string;
 	playAgain: string;
+	verbs: string;
+	firstGroup: string;
+	secondGroup: string;
+	thirdGroup: string;
 };
 
 export const translations: Record<'en' | 'fr' | 'es' | 'uk', Translation> = {
@@ -52,7 +56,11 @@ export const translations: Record<'en' | 'fr' | 'es' | 'uk', Translation> = {
 		noRecords: 'No scores yet',
 		mute: 'Mute',
 		unmute: 'Unmute',
-		playAgain: 'Play Again'
+		playAgain: 'Play Again',
+		verbs: 'Verbs',
+		firstGroup: 'First Group',
+		secondGroup: 'Second Group',
+		thirdGroup: 'Third Group'
 	},
 	fr: {
 		title: '🧮 Quiz de Maths Amusant 🧮',
@@ -79,7 +87,11 @@ export const translations: Record<'en' | 'fr' | 'es' | 'uk', Translation> = {
 		noRecords: "Aucun score pour l'instant",
 		mute: 'Silencieux',
 		unmute: 'Son',
-		playAgain: 'Rejouer'
+		playAgain: 'Rejouer',
+		verbs: 'Verbes',
+		firstGroup: 'Premier Groupe',
+		secondGroup: 'Deuxième Groupe',
+		thirdGroup: 'Troisième Groupe'
 	},
 	es: {
 		title: '🧮 Divertido Quiz de Matemáticas 🧮',
@@ -106,7 +118,11 @@ export const translations: Record<'en' | 'fr' | 'es' | 'uk', Translation> = {
 		noRecords: 'Aún no hay puntuaciones',
 		mute: 'Silencio',
 		unmute: 'Sonido',
-		playAgain: 'Jugar de nuevo'
+		playAgain: 'Jugar de nuevo',
+		verbs: 'Verbos',
+		firstGroup: 'Primer Grupo',
+		secondGroup: 'Segundo Grupo',
+		thirdGroup: 'Tercer Grupo'
 	},
 	uk: {
 		title: '🧮 Веселий математичний тест 🧮',
@@ -133,6 +149,10 @@ export const translations: Record<'en' | 'fr' | 'es' | 'uk', Translation> = {
 		noRecords: 'Поки що немає результатів',
 		mute: 'Вимкнути звук',
 		unmute: 'Увімкнути звук',
-		playAgain: 'Грати знову'
+		playAgain: 'Грати знову',
+		verbs: 'Дієслова',
+		firstGroup: 'Перша група',
+		secondGroup: 'Друга група',
+		thirdGroup: 'Третя група'
 	}
 };
